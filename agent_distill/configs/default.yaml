@@ -1,0 +1,41 @@
+model:
+  name_or_path: "Qwen/Qwen2.5-3B-Instruct"
+  dtype: "bfloat16"
+  max_seq_length: 4096
+
+env:
+  task: "alfworld"
+  split: "train"
+  max_steps: 40
+  data_path: "agent_distill/data/alfworld"
+  instruction_path: "agent_distill/data/alfworld/instructions/alfworld_inst.txt"
+  icl_path: "agent_distill/data/alfworld/icl_examples/alfworld_icl.json"
+  icl_num: 1
+  num_collect: 64
+  num_eval: 134
+
+tisd:
+  lambda_: 2.0
+  teacher_temp: 0.8
+  kl_clip: 20.0
+
+training:
+  lr: 2.0e-5
+  weight_decay: 0.01
+  warmup_ratio: 0.1
+  num_iterations: 3
+  distill_epochs: 2
+  grad_accumulation_steps: 4
+  max_grad_norm: 1.0
+  batch_size: 4
+
+generation:
+  temperature: 0.7
+  top_p: 0.9
+  max_new_tokens: 128
+
+logging:
+  wandb_project: "tisd-alfworld"
+  save_dir: "checkpoints"
+  trajectory_dir: "trajectories"
+  log_every: 10

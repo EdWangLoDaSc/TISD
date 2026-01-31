@@ -1,0 +1,12 @@
+ETO/
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+checkpoints/
+trajectories/
+wandb/
+*.egg-info/
+dist/
+build/
+.env
