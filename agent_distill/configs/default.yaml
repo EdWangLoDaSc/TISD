@@ -7,9 +7,10 @@ env:
   task: "alfworld"
   split: "train"
   max_steps: 40
-  data_path: "agent_distill/data/alfworld"
-  instruction_path: "agent_distill/data/alfworld/instructions/alfworld_inst.txt"
-  icl_path: "agent_distill/data/alfworld/icl_examples/alfworld_icl.json"
+  # Paths relative to agent_distill/ package root — resolved automatically
+  data_path: "data/alfworld"
+  instruction_path: "data/alfworld/instructions/alfworld_inst.txt"
+  icl_path: "data/alfworld/icl_examples/alfworld_icl.json"
   icl_num: 1
   num_collect: 64
   num_eval: 134

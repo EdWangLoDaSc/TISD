@@ -12,8 +12,9 @@ set -e
 #   bash run.sh train --resume_iter N  — resume from iteration N
 # ============================================================
 
+# Always resolve to project root regardless of where this script is called from
 PROJECT_ROOT="$(cd "$(dirname "$0")" && pwd)"
-CONFIG="${PROJECT_ROOT}/agent_distill/configs/default.yaml"
+cd "${PROJECT_ROOT}"
 export PYTHONPATH="${PROJECT_ROOT}:${PYTHONPATH}"
 
 # ---------- helpers ----------
@@ -22,54 +23,32 @@ log() { echo -e "\n>>> $1\n"; }
 # ---------- setup ----------
 cmd_setup() {
     log "Installing Python dependencies"
-    pip install -r "${PROJECT_ROOT}/requirements.txt"
+    pip install -r requirements.txt
 
     log "Downloading ALFWorld game data"
+    alfworld-download 2>/dev/null || \
     python -c "import alfworld.agents; alfworld.agents.download()" 2>/dev/null || \
-    python -c "
-import alfworld
-import os, subprocess
-data_dir = os.path.dirname(alfworld.__file__)
-print(f'alfworld installed at {data_dir}')
-" && alfworld-download 2>/dev/null || echo "ALFWorld data may need manual download: export ALFWORLD_DATA=<path>"
+    echo "WARNING: Could not auto-download ALFWorld data. Run 'alfworld-download' manually."
 
     log "Setup complete"
 }
 
 # ---------- collect ----------
 cmd_collect() {
-    NUM=${1:-64}
-    SPLIT=${2:-train}
-    OUTPUT=${3:-trajectories/collected}
-
-    log "Collecting ${NUM} trajectories from ${SPLIT} split"
-    python -m agent_distill.scripts.collect_trajectories \
-        --config "${CONFIG}" \
-        --num "${NUM}" \
-        --split "${SPLIT}" \
-        --output "${OUTPUT}" \
-        "${@:4}"
+    log "Collecting trajectories"
+    python -m agent_distill.scripts.collect_trajectories "$@"
 }
 
 # ---------- evaluate ----------
 cmd_eval() {
-    SPLIT=${1:-test}
-    NUM=${2:-134}
-
-    log "Evaluating on ${SPLIT} split (${NUM} tasks)"
-    python -m agent_distill.scripts.evaluate \
-        --config "${CONFIG}" \
-        --split "${SPLIT}" \
-        --num "${NUM}" \
-        "${@:3}"
+    log "Evaluating"
+    python -m agent_distill.scripts.evaluate "$@"
 }
 
 # ---------- train ----------
 cmd_train() {
     log "Starting TISD training pipeline"
-    python -m agent_distill.scripts.run_tisd \
-        --config "${CONFIG}" \
-        "$@"
+    python -m agent_distill.scripts.run_tisd "$@"
 }
 
 # ---------- dispatch ----------
@@ -83,7 +62,14 @@ case "${CMD}" in
     train)    cmd_train "$@" ;;
     *)
         echo "Unknown command: ${CMD}"
-        echo "Usage: bash run.sh {setup|collect|eval|train}"
+        echo "Usage: bash run.sh {setup|collect|eval|train} [options]"
+        echo ""
+        echo "Examples:"
+        echo "  bash run.sh setup"
+        echo "  bash run.sh train"
+        echo "  bash run.sh train --resume_iter 1"
+        echo "  bash run.sh collect --num 64 --split train"
+        echo "  bash run.sh eval --split test --num 134"
         exit 1
         ;;
 esac

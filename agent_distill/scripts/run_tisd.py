@@ -1,8 +1,9 @@
 """Main entry point for TISD training.
 
 Usage:
-    python -m agent_distill.scripts.run_tisd --config agent_distill/configs/default.yaml
-    python -m agent_distill.scripts.run_tisd --config agent_distill/configs/default.yaml --resume_iter 1
+    python -m agent_distill.scripts.run_tisd
+    python -m agent_distill.scripts.run_tisd --config /path/to/custom.yaml
+    python -m agent_distill.scripts.run_tisd --resume_iter 1
 """
 import argparse
 
@@ -12,8 +13,8 @@ from agent_distill.training.iteration import TISDPipeline
 def main():
     parser = argparse.ArgumentParser(description="TISD: Trajectory-Informed Self-Distillation")
     parser.add_argument(
-        "--config", type=str, default="agent_distill/configs/default.yaml",
-        help="Path to YAML config file.",
+        "--config", type=str, default="default.yaml",
+        help="Config file name (looked up in agent_distill/configs/) or absolute path.",
     )
     parser.add_argument(
         "--num_iterations", type=int, default=None,

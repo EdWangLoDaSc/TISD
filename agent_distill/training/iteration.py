@@ -3,16 +3,45 @@ import yaml
 import json
 from typing import Optional
 
+from agent_distill import PACKAGE_ROOT, PROJECT_ROOT
 from agent_distill.model.qwen_wrapper import QwenModel
 from agent_distill.env.alfworld_adapter import ALFWorldCollector
 from agent_distill.training.trainer import TISDTrainer
 from agent_distill.utils.logging import logger, setup_logging, setup_wandb
 
+# Config keys whose values are file/dir paths relative to PACKAGE_ROOT
+_ENV_PATH_KEYS = {"data_path", "instruction_path", "icl_path"}
+_LOG_PATH_KEYS = {"save_dir", "trajectory_dir"}
+
+
+def _resolve(path: str, root: str) -> str:
+    """Make a path absolute relative to root if it isn't already."""
+    if os.path.isabs(path):
+        return path
+    return os.path.join(root, path)
+
 
 def load_config(config_path: str) -> dict:
-    """Load YAML config file."""
+    """Load YAML config and resolve all relative paths to absolute."""
+    # Resolve the config path itself
+    if not os.path.isabs(config_path):
+        config_path = os.path.join(PACKAGE_ROOT, "configs", config_path) \
+            if not os.path.exists(config_path) else os.path.abspath(config_path)
+
     with open(config_path) as f:
-        return yaml.safe_load(f)
+        config = yaml.safe_load(f)
+
+    # Resolve env paths relative to PACKAGE_ROOT (data lives inside the package)
+    for key in _ENV_PATH_KEYS:
+        if key in config.get("env", {}):
+            config["env"][key] = _resolve(config["env"][key], PACKAGE_ROOT)
+
+    # Resolve logging paths relative to PROJECT_ROOT (outputs live beside the package)
+    for key in _LOG_PATH_KEYS:
+        if key in config.get("logging", {}):
+            config["logging"][key] = _resolve(config["logging"][key], PROJECT_ROOT)
+
+    return config
 
 
 class TISDPipeline:
